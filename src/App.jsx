@@ -306,6 +306,9 @@ export default function StockScout() {
 
             <div style={{ textAlign: "center", marginTop: 16, fontFamily: "'DM Mono', monospace", fontSize: 9, color: "#222", letterSpacing: 1 }}>
               LIVE DATA VIA YAHOO FINANCE · NOT FINANCIAL ADVICE
+              <div style={{ textAlign: "center", marginTop: 8, fontFamily: "'DM Mono', monospace", fontSize: 9, color: "#333", letterSpacing: 1 }}>
+  CREATED BY THASHHAN · RITVAN · PRAJWAL
+</div>
             </div>
           </div>
         )}
