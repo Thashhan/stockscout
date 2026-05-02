@@ -86,7 +86,7 @@ export default function StockScout() {
     setQuery(ticker);
 
     try {
-      const res = await fetch(`http://localhost:3001/stock/${ticker}`);
+      const res = await fetch(`https://stockscout-fv6f.onrender.com/stock/${ticker}`);
       const data = await res.json();
 
       if (data.error) {
