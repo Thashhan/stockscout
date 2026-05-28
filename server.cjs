@@ -343,6 +343,10 @@ async function getFundamentals(symbol) {
     // Some Yahoo summary modules fail for Indian tickers. Return what we have.
   }
 
+  if (!fundamentals.peRatio && !fundamentals.eps && !fundamentals.sector) {
+    await fillFundamentalsFromYahooPage(symbol, fundamentals);
+  }
+
   return fundamentals;
 }
 
@@ -362,6 +366,35 @@ function emptyFundamentals() {
     sector: null,
     industry: null,
   };
+}
+
+async function fillFundamentalsFromYahooPage(symbol, fundamentals) {
+  try {
+    const response = await axios.get(`https://finance.yahoo.com/quote/${encodeURIComponent(symbol)}`, {
+      headers: {
+        ...yahooHeaders,
+        Accept: "text/html,application/xhtml+xml",
+      },
+      timeout: 8000,
+    });
+
+    const html = String(response.data);
+    const pe = findYahooValue(html, "trailingPE");
+    const eps = findYahooValue(html, "epsTrailingTwelveMonths");
+    const marketCap = findYahooValue(html, "marketCap");
+
+    fundamentals.peRatio = fundamentals.peRatio || pe;
+    fundamentals.eps = fundamentals.eps || eps;
+    fundamentals.marketCap = fundamentals.marketCap || marketCap;
+  } catch {
+    // Keep fundamentals optional.
+  }
+}
+
+function findYahooValue(html, key) {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(new RegExp(`"${escapedKey}"\\s*:\\s*\\{\\s*"raw"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`));
+  return match ? Number(match[1]) : null;
 }
 
 async function getYahooAuth() {
