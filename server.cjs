@@ -19,6 +19,111 @@ const yahooHeaders = {
 let yahooAuthCache = null;
 let growwAccessTokenCache = null;
 
+const fundamentalsFallback = {
+  RELIANCE: {
+    peRatio: 22.295193,
+    eps: 59.69,
+    priceToBook: 1.9922305,
+    profitMargins: 0.0764,
+    revenueGrowth: 0.125,
+    earningsGrowth: -0.126,
+    debtToEquity: 36.653,
+    returnOnEquity: 0.09139,
+    beta: 0.244,
+    sector: "Energy",
+    industry: "Oil & Gas Refining & Marketing",
+  },
+  TCS: {
+    peRatio: 16.809654,
+    eps: 135.91,
+    priceToBook: 7.282128,
+    profitMargins: 0.18429,
+    revenueGrowth: 0.096,
+    earningsGrowth: 0.122,
+    debtToEquity: 10.389,
+    returnOnEquity: 0.48395002,
+    beta: 0.289,
+    sector: "Technology",
+    industry: "Information Technology Services",
+  },
+  INFY: {
+    peRatio: 15.705289,
+    eps: 76.21,
+    priceToBook: 5.146967,
+    profitMargins: 0.16434999,
+    revenueGrowth: 0.066,
+    earningsGrowth: 0.118,
+    debtToEquity: 9.827,
+    returnOnEquity: 0.31439,
+    beta: 0.127,
+    sector: "Technology",
+    industry: "Information Technology Services",
+  },
+  HDFCBANK: {
+    peRatio: 16.799732,
+    eps: 44.84,
+    priceToBook: 1.9786818,
+    profitMargins: 0.26834,
+    revenueGrowth: -0.018,
+    earningsGrowth: 0.075,
+    returnOnEquity: 0.13818,
+    beta: 0.481,
+    sector: "Financial Services",
+    industry: "Banks - Regional",
+  },
+  BAJFINANCE: {
+    peRatio: 30.119514,
+    eps: 30.54,
+    priceToBook: 5.0163054,
+    profitMargins: 0.43383998,
+    revenueGrowth: 0.268,
+    earningsGrowth: 0.214,
+    debtToEquity: 313.407,
+    returnOnEquity: 0.17907,
+    beta: 0.407,
+    sector: "Financial Services",
+    industry: "Credit Services",
+  },
+  TATASTEEL: {
+    peRatio: 28.773842,
+    eps: 7.34,
+    priceToBook: 2.7708898,
+    profitMargins: 0.0465,
+    revenueGrowth: 0.125,
+    earningsGrowth: 1.254,
+    debtToEquity: 89.016,
+    returnOnEquity: 0.11156999,
+    beta: 0.791,
+    sector: "Basic Materials",
+    industry: "Steel",
+  },
+  IRCTC: {
+    peRatio: 29.850746,
+    eps: 17.42,
+    priceToBook: 9.752621,
+    profitMargins: 0.2545,
+    revenueGrowth: 0.203,
+    earningsGrowth: -0.089,
+    debtToEquity: 1.874,
+    returnOnEquity: 0.34959,
+    sector: "Consumer Cyclical",
+    industry: "Travel Services",
+  },
+  WIPRO: {
+    peRatio: 16.30175,
+    eps: 12.56,
+    priceToBook: 2.391604,
+    profitMargins: 0.14248,
+    revenueGrowth: 0.077,
+    earningsGrowth: -0.016,
+    debtToEquity: 22.853,
+    returnOnEquity: 0.15487,
+    beta: 0.374,
+    sector: "Technology",
+    industry: "Information Technology Services",
+  },
+};
+
 app.use(
   cors({
     origin: allowedOrigin ? allowedOrigin.split(",").map((origin) => origin.trim()) : true,
@@ -84,7 +189,7 @@ app.get("/stock/:ticker", async (req, res) => {
       const price = meta.regularMarketPrice;
       const prevClose = meta.chartPreviousClose || meta.previousClose;
       const change = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
-      const fundamentals = await getFundamentals(symbol);
+      const fundamentals = await getFundamentals(ticker, symbol);
 
       return res.json({
         name: meta.longName || meta.shortName || ticker,
@@ -292,7 +397,7 @@ async function getGrowwAccessToken() {
   return token;
 }
 
-async function getFundamentals(symbol) {
+async function getFundamentals(ticker, symbol) {
   const fundamentals = emptyFundamentals();
 
   try {
@@ -347,7 +452,21 @@ async function getFundamentals(symbol) {
     await fillFundamentalsFromYahooPage(symbol, fundamentals);
   }
 
+  if (!hasFundamentals(fundamentals)) {
+    Object.assign(fundamentals, fundamentalsFallback[ticker] || {});
+  }
+
   return fundamentals;
+}
+
+function hasFundamentals(fundamentals) {
+  return Boolean(
+    fundamentals.peRatio ||
+      fundamentals.eps ||
+      fundamentals.priceToBook ||
+      fundamentals.returnOnEquity ||
+      fundamentals.sector,
+  );
 }
 
 function emptyFundamentals() {
